@@ -50,35 +50,9 @@ import Button from './Button.vue'
     display: flex;
     flex-direction: column;
 }
-.button-login {
-    font-family: Inter;
-    font-size: 15px;
-    display: flex;
-    justify-content: center;
-    border-radius: 16px;
-    padding: 0;
-}
-.button-login:hover {
-    cursor: pointer;
-    background-color:  rgb(51, 51, 51);
-    color: white;
-}
 .button-register {
-    font-family: Inter;
-    color: #1E82DF;
-    font-size: 15px;
-    display: flex;
-    justify-content: center;
-    border-radius: 16px;
     margin-top: 16px;
-    padding: 0;
 }
-.button-register:hover {
-    cursor: pointer;
-    background-color:  rgb(51, 51, 51);
-    color: white;
-}
-    
 .container-wrapper {
     display: flex;
     justify-content: space-around;
