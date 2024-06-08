@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import LogoIcon from '../assets/logo.svg';
-import Button from './Button.vue'
+import Button from './Button.vue';
+import { useRouter } from 'vue-router';
+const router = useRouter();
 </script>
 
 <template>
@@ -11,7 +13,7 @@ import Button from './Button.vue'
                 <p class="title-project">SyncCart</p>
             </div>
             <div class="container-action">
-                <Button theme="primary" text="Регистрация" class="button-login"/>    
+                <Button theme="primary" text="Регистрация" class="button-login" @click="() => router.push({name:'SignUp'})"/>    
                 <Button theme="secondary" text="Войти" class="button-register"/>
             </div>
         </div>
