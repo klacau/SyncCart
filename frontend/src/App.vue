@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import HomePage from './components/HomePage.vue';
+import WelcomePage from './components/WelcomePage.vue';
 </script>
 
 <template>
-    <router-view/>
+    <HomePage/>
 </template>
 
 <style>
