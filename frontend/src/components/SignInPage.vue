@@ -3,7 +3,13 @@ import logoUrl from '../assets/logotype.svg?url'
 import Button from './Button.vue'
 import InputField from './InputField.vue'
 import {useRouter} from 'vue-router'
+import { ref } from 'vue';
 const router = useRouter();
+const userName = ref('');
+const password = ref('');
+const emit = defineEmits<{
+    info: [text: string],
+}>();
 </script>
 
 <template>
@@ -18,11 +24,17 @@ const router = useRouter();
     </div>
     <div class="sign-up-main-content-wrapper">
         <div class="sign-up-main-content">
-            <h2 class="sign-up-main-content-h2">Регистрация</h2>
-            <InputField label="E-mail"/>
-            <InputField label="Имя пользователя"/>
-            <InputField label="Пароль"/>
-            <Button theme="primary" text="Зарегистрироваться" class="button-register"/>
+            <h2 class="sign-up-main-content-h2">Вход</h2>
+            <InputField label="Имя пользователя"
+                :text="userName" 
+                @change="(value) => userName = value" 
+            />
+            <InputField label="Пароль"
+                :text="password"
+                input-type="password"
+                @change="(value) => password = value"
+            />
+            <Button theme="primary" text="Войти" class="button-register"/>
         </div>
     </div>    
 </template>
@@ -75,3 +87,4 @@ const router = useRouter();
         width: 100%;
     }
 </style>
+

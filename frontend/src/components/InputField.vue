@@ -1,9 +1,19 @@
 <script setup lang="ts">
 
 interface FieldProps {
+    inputType: InputType
     label: string
+    text: string
 }
-const props = defineProps<FieldProps>()
+type InputType = 'text' | 'password'
+
+const props = withDefaults(defineProps<FieldProps>(), {
+      inputType: 'text'
+})
+
+const emit = defineEmits<{
+    change: [value: string]
+    }>();
 </script>
 
 <template>
@@ -11,9 +21,14 @@ const props = defineProps<FieldProps>()
         <p class="field-header">
             {{props.label}}
         </p>
-        <input class="field-input" type="text"></input>
+        <input class="field-input"
+            :type="props.inputType"
+            :value="props.text"
+            @input="event => $emit('change', (event.target as HTMLInputElement).value)"
+        ></input>
     </div>
 </template>
+
 <style>
     .field{
         width: 100%;

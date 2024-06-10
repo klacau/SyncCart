@@ -14,7 +14,7 @@ const router = useRouter();
             </div>
             <div class="container-action">
                 <Button theme="primary" text="Регистрация" class="button-login" @click="() => router.push({name:'SignUp'})"/>    
-                <Button theme="secondary" text="Войти" class="button-register"/>
+                <Button theme="secondary" text="Войти" class="button-register" @click="() => router.push({name:'SignIn'})"/>
             </div>
         </div>
     </div>
