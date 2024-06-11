@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Form
 from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi import Depends, HTTPException, status
@@ -8,7 +8,8 @@ from datetime import datetime, timedelta, timezone
 
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from auth.models import SignUpForm, Token, TokenData, User
+from auth.forms import SignUpForm
+from auth.models import Token, TokenData, User
 from auth.passwords import PasswordContext
 from auth.repositories import UsersRepository
 
@@ -21,7 +22,7 @@ from typing import Annotated
 
 SECRET_KEY = "dedafda6e2c3943cfcb674a8b7f5e61bcaceaa3ba1742ce6c9458be83c62271e"
 SIGNING_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 1
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
@@ -36,7 +37,7 @@ users_repository = UsersRepository(database)
 app = FastAPI()
 
 allowed_origins = [
-    "http://localhost:5173",
+    "http://localhost:5173"
 ]
 
 app.add_middleware(
@@ -103,7 +104,8 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     return Token(access_token=access_token, token_type="bearer")
 
 @app.post("/auth/sign-up")
-async def sign_up_user(form_data: SignUpForm):
+async def sign_up_user(form_data: Annotated[SignUpForm, Depends()]):
+    print(form_data)
     user = User(
             username=form_data.username,
             email=form_data.email,
@@ -117,6 +119,11 @@ async def sign_up_user(form_data: SignUpForm):
                 status_code=status.HTTP_409_CONFLICT,
                 detail=result.err_value
             )
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token({"sub": user.username}, access_token_expires)
+
+    return Token(access_token=access_token, token_type="bearer")
 
 @app.get("/product-lists")
 async def get_product_lists(current_user: Annotated[User, Depends(get_current_user)]) -> list[ProductList]:
