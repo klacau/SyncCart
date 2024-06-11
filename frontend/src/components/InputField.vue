@@ -1,15 +1,15 @@
 <script setup lang="ts">
 
 interface FieldProps {
-    inputType: InputType
+    inputType?: InputType
     label: string
     text: string
 }
 type InputType = 'text' | 'password'
 
 const props = withDefaults(defineProps<FieldProps>(), {
-      inputType: 'text'
-})
+    inputType: 'text'
+});
 
 const emit = defineEmits<{
     change: [value: string]

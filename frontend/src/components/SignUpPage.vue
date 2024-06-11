@@ -1,9 +1,37 @@
 <script setup lang="ts">
-import logoUrl from '../assets/logotype.svg?url'
-import Button from './Button.vue'
-import InputField from './InputField.vue'
-import {useRouter} from 'vue-router'
+import logoUrl from '../assets/logotype.svg?url';
+import Button from './Button.vue';
+import InputField from './InputField.vue';
+import { useRouter } from 'vue-router';
+import { ref } from 'vue';
+import axios from 'axios';
+
+import { authStore } from '../auth';
+import { getEndpointUrl } from '../api';
+
 const router = useRouter();
+
+const email = ref('');
+const username = ref('');
+const password = ref('');
+
+async function signUp() {
+    const data = new URLSearchParams();
+    data.append('email', email.value);
+    data.append('username', username.value);
+    data.append('password', password.value);
+
+    const config = {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    }
+
+    const response = await axios.post(getEndpointUrl('/auth/sign-up'), data.toString(), config);
+    authStore.accessToken = response.data['access_token'];
+    
+    router.push({ name: 'Root' });
+}
 </script>
 
 <template>
@@ -19,10 +47,24 @@ const router = useRouter();
     <div class="sign-up-main-content-wrapper">
         <div class="sign-up-main-content">
             <h2 class="sign-up-main-content-h2">Регистрация</h2>
-            <InputField label="E-mail"/>
-            <InputField label="Имя пользователя"/>
-            <InputField label="Пароль"/>
-            <Button theme="primary" text="Зарегистрироваться" class="button-register"/>
+            <InputField label="E-mail"
+                :text="email" 
+                @change="(value) => email = value" 
+            />
+            <InputField label="Имя пользователя"
+                :text="username" 
+                @change="(value) => username = value" 
+            />
+            <InputField label="Пароль"
+                :text="password"
+                input-type="password"
+                @change="(value) => password = value" 
+            />
+            <Button class="button-register" 
+                theme="primary" 
+                text="Зарегистрироваться" 
+                @click="signUp"
+            />
         </div>
     </div>    
 </template>

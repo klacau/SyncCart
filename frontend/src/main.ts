@@ -4,10 +4,12 @@ import App from './App.vue';
 
 import { createWebHistory, createRouter } from 'vue-router';
 
-import HomePage from './components/WelcomePage.vue';
+import HomePage from './components/HomePage.vue';
 import WelcomePage from './components/WelcomePage.vue';
 import SignUpPage from './components/SignUpPage.vue';
 import SignInPage from './components/SignInPage.vue';
+
+import { authStore } from './auth';
 
 const routes = [
     { 
@@ -38,8 +40,7 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-    if (to.name === 'Welcome' || to.name === 'SignUp' || to.name === 'SignIn') {
-        console.log(to.name)
+    if (authStore.accessToken || to.name === 'Welcome' || to.name === 'SignUp' || to.name === 'SignIn') {
         next();
     } 
     else next({name: 'Welcome'});

@@ -7,7 +7,7 @@ interface ButtonProps {
     theme: ButtonStyle
     text: string
     imageSrc?: string
-    size: 'large' | 'medium'
+    size?: 'large' | 'medium'
 }
 const props = withDefaults(defineProps<ButtonProps>(), {
         size: 'large'

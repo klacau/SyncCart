@@ -6,6 +6,25 @@ import ButtonNotification from '../assets/notification-icon.svg?url';
 import peopleIcon from '../assets/people-icon.svg?url';
 import arrowIcon from '../assets/arrow-icon.svg?url';
 import ProductListCard from './ProductListCard.vue';
+
+import axios from 'axios';
+import { ref, onMounted } from 'vue';
+
+import { authStore } from '../auth';
+import { getEndpointUrl } from '../api';
+
+const productLists = ref<any>([]);
+
+onMounted(async () => {
+    const config = {
+        headers: {
+            'Authorization': `Bearer ${authStore.accessToken}`
+        }
+    };
+
+    const response = await axios.get(getEndpointUrl('/product-lists'), config);
+    productLists.value = response.data;
+});
 </script>
 
 <template>
@@ -22,13 +41,27 @@ import ProductListCard from './ProductListCard.vue';
                 </div>
             </header>
             <div class="container-product-list">
-                <ProductListCard/>
+                <div class="container-product-wrapper">
+                    <div class="container-product" v-for="list in productLists" :key="list.id">
+                        <ProductListCard :name="list.name" />
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <style>
+.container-product-wrapper {
+    display: flex;
+    flex-grow: 1;
+    max-width: 928px;
+}
+.container-product {
+    display: flex;
+    flex-wrap: wrap;
+    padding-left: 32px;
+}
 .container-product-list {
     display: flex;
     justify-content: space-around;

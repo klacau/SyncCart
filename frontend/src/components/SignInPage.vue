@@ -1,15 +1,38 @@
 <script setup lang="ts">
 import logoUrl from '../assets/logotype.svg?url'
-import Button from './Button.vue'
-import InputField from './InputField.vue'
-import {useRouter} from 'vue-router'
+import Button from './Button.vue';
+import InputField from './InputField.vue';
+import { useRouter } from 'vue-router';
 import { ref } from 'vue';
+import axios from 'axios';
+
+import { authStore } from '../auth';
+import { getEndpointUrl } from '../api';
+
 const router = useRouter();
-const userName = ref('');
+const username = ref('');
 const password = ref('');
+
 const emit = defineEmits<{
     info: [text: string],
 }>();
+
+async function signIn() {
+    const data = new URLSearchParams();
+    data.append('username', username.value);
+    data.append('password', password.value);
+
+    const config = {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    }
+
+    const response = await axios.post(getEndpointUrl('/auth/token'), data.toString(), config);
+    authStore.accessToken = response.data['access_token'];
+    
+    router.push({ name: 'Root' });
+}
 </script>
 
 <template>
@@ -26,15 +49,15 @@ const emit = defineEmits<{
         <div class="sign-up-main-content">
             <h2 class="sign-up-main-content-h2">Вход</h2>
             <InputField label="Имя пользователя"
-                :text="userName" 
-                @change="(value) => userName = value" 
+                :text="username" 
+                @change="(value) => username = value" 
             />
             <InputField label="Пароль"
                 :text="password"
                 input-type="password"
                 @change="(value) => password = value"
             />
-            <Button theme="primary" text="Войти" class="button-register"/>
+            <Button theme="primary" text="Войти" class="button-register" @click="signIn" />
         </div>
     </div>    
 </template>

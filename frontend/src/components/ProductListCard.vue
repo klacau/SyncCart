@@ -1,25 +1,21 @@
-<script setup leng="ts">
+<script setup lang="ts">
 
+interface ProductListCardProps {
+    name: string;
+    // items: readonly ProductListItem[];
+}
+
+const props = defineProps<ProductListCardProps>();
 </script>
+
 <template>
-    <div class="container-product-wrapper">
-        <div class="container-product">
-            <ul class="product-list">
-                <div class="product-list__inner">
-                    <li class="first-row" :style="{color: pickedColor}"><h3>Список 1</h3></li>
-                    <li class="second-row"><p>Бананы</p></li>
-                    <li><p>Даники</p></li>
-                </div>
-            </ul>
-            <ul class="product-list">
-                <div class="product-list__inner">
-                    <li class="first-row"><h3>Список 2</h3></li>
-                    <li class="second-row"><p>Яблоки</p></li>
-                    <li><p>Груши</p></li>
-                </div>
-            </ul>
+    <ul class="product-list">
+        <div class="product-list__inner">
+            <li class="first-row" :style="{backgroundColor: '#EDF5FF'}"><h3>{{ props.name }}</h3></li>
+            <li class="second-row"><p>Бананы</p></li>
+            <li><p>Даники</p></li>
         </div>
-    </div>
+    </ul>
 </template>
 
 <style>
@@ -62,15 +58,5 @@ li:last-child {
     max-height: 308px;
     padding-right: 32px;
     padding-bottom: 32px;
-}
-.container-product-wrapper {
-    display: flex;
-    flex-grow: 1;
-    max-width: 928px;
-}
-.container-product {
-    display: flex;
-    flex-wrap: wrap;
-    padding-left: 32px;
 }
 </style>
