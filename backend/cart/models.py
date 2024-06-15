@@ -7,22 +7,22 @@ class Currency(Enum):
     RUB = "RUB"
     USD = "USD"
 
-class ProductMeasureType(Enum):
+class ProductAmountType(Enum):
     PIECES = "PCS"
     KG = "KG"
 
-class ProductMeasure(BaseModel):
+class ProductAmount(BaseModel):
     value: Decimal
-    measure_type: ProductMeasureType
+    amount_type: ProductAmountType
 
-class ProductCost(BaseModel):
+class ProductPrice(BaseModel):
     value: Decimal
     currency: Currency
 
 class Product(BaseModel):
     name: str = Field(max_length=50)
-    measure: ProductMeasure
-    cost: Optional[ProductCost] = None
+    amount: ProductAmount
+    price: Optional[ProductPrice] = None
 
 class ProductListItem(BaseModel):
     item_id: int
