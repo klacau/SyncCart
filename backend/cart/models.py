@@ -25,11 +25,23 @@ class Product(BaseModel):
     cost: Optional[ProductCost] = None
 
 class ProductListItem(BaseModel):
-    id: int
+    item_id: int
     checked: bool
     product: Product
 
 class ProductList(BaseModel):
-    id: str
+    product_list_id: str
+    username: str
     name: str = Field(max_length=50)
+    color: str = Field(pattern=r"^#[a-f0-9]{6}$")
     items: list[ProductListItem]
+
+class ProductListCreate(BaseModel):
+    name: str = Field(max_length=50)
+    color: str = Field(pattern=r"^#[a-f0-9]{6}$")
+    items: list[ProductListItem]
+
+class ProductListUpdate(BaseModel):
+    name: Optional[str] = Field(max_length=50, default=None)
+    color: Optional[str] = Field(pattern=r"^#[a-f0-9]{6}$", default=None)
+    items: Optional[list[ProductListItem]] = None

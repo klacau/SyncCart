@@ -1,4 +1,3 @@
-from pydantic import BaseModel, Field
 from fastapi import Form
 
 from typing import Annotated

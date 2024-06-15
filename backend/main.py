@@ -16,13 +16,13 @@ from auth.repositories import UsersRepository
 from result import is_err, Result, Ok, Err
 
 from cart.repositories import ProductListsRepository
-from cart.models import ProductList
+from cart.models import ProductList, ProductListCreate, ProductListUpdate
 
-from typing import Annotated
+from typing import Annotated, Optional
 
 SECRET_KEY = "dedafda6e2c3943cfcb674a8b7f5e61bcaceaa3ba1742ce6c9458be83c62271e"
 SIGNING_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 1
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
@@ -128,3 +128,51 @@ async def sign_up_user(form_data: Annotated[SignUpForm, Depends()]):
 @app.get("/product-lists")
 async def get_product_lists(current_user: Annotated[User, Depends(get_current_user)]) -> list[ProductList]:
     return await product_lists_repository.get_product_lists(current_user.username)
+
+@app.get("/product-lists/{product_list_id}")
+async def get_product_list(
+        product_list_id: str, 
+        current_user: Annotated[User, Depends(get_current_user)]
+    ) -> Optional[ProductList]:
+    product_list = await product_lists_repository.get_product_list(product_list_id)
+    if product_list.username != current_user.username:
+        return None
+    return product_list
+
+@app.post("/product-lists/{product_list_id}")
+async def create_product_list(
+        product_list_id: str, 
+        data: ProductListCreate, 
+        current_user: Annotated[User, Depends(get_current_user)]
+    ):
+    product_list = ProductList(
+        product_list_id=product_list_id,
+        username=current_user.username,
+        name=data.name,
+        color=data.color,
+        items=data.items
+    )
+    await product_lists_repository.add_product_list(product_list)
+
+@app.put("/product-lists/{product_list_id}")
+async def update_product_list(
+        product_list_id: str, 
+        data: ProductListUpdate, 
+        current_user: Annotated[User, Depends(get_current_user)]
+    ):
+    product_list = await product_lists_repository.get_product_list(product_list_id)
+    if product_list is None or product_list.username != current_user.username:
+        return
+    
+    await product_lists_repository.update_product_list(product_list_id, data)
+
+@app.delete("/product-lists/{product_list_id}")
+async def delete_product_list(
+        product_list_id: str, 
+        current_user: Annotated[User, Depends(get_current_user)]
+    ):
+    product_list = await product_lists_repository.get_product_list(product_list_id)
+    if product_list is None or product_list.username != current_user.username:
+        return
+    
+    await product_lists_repository.delete_product_list(product_list_id)
