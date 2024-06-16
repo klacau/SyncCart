@@ -2,6 +2,14 @@ from fastapi import Form
 
 from typing import Annotated
 
+class SignInForm:
+    def __init__(self, *, 
+            username: Annotated[str, Form()],
+            password: Annotated[str, Form()]
+        ):
+        self.username = username
+        self.password = password
+
 class SignUpForm:
     def __init__(self, *, 
             username: Annotated[str, Form(min_length=1, max_length=16, pattern=r"^[a-zA-Z0-9_]*$")],

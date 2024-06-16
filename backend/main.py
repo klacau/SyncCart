@@ -1,30 +1,21 @@
-from fastapi import FastAPI, Form
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError, jwt
-from datetime import datetime, timedelta, timezone
+from fastapi import Depends, HTTPException, Request, Response, status
 
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from auth.forms import SignUpForm
-from auth.models import Token, TokenData, User
-from auth.passwords import PasswordContext
-from auth.repositories import UsersRepository
-
-from result import is_err, Result, Ok, Err
-
 from cart.repositories import ProductListsRepository
 from cart.models import ProductList, ProductListCreate, ProductListUpdate
+from key_value_store import RAMOnlyKVStore
 
+from users.forms import SignInForm, SignUpForm
+from users.models import User
+from users.passwords import PasswordContext
+from users.repositories import SessionsRepository, UsersRepository
+
+from result import is_err, Result, Ok, Err
 from typing import Annotated, Optional
-
-SECRET_KEY = "dedafda6e2c3943cfcb674a8b7f5e61bcaceaa3ba1742ce6c9458be83c62271e"
-SIGNING_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 db_client = AsyncIOMotorClient("mongodb://localhost:27017")
 database = db_client.sync_cart
@@ -33,6 +24,7 @@ password_context = PasswordContext()
 
 product_lists_repository = ProductListsRepository(database)
 users_repository = UsersRepository(database)
+sessions_repository = SessionsRepository(RAMOnlyKVStore())
 
 app = FastAPI()
 
@@ -48,6 +40,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def get_session_id(request: Request) -> Optional[str]:
+    return request.cookies.get("session")
+
 async def authenticate_user(username: str, password: str) -> Result[User, str]:
     user = await users_repository.get_user(username)
 
@@ -58,54 +53,53 @@ async def authenticate_user(username: str, password: str) -> Result[User, str]:
     
     return Ok(user)
 
-def create_access_token(data: dict, expires_delta: timedelta) -> str:
-    to_encode = data.copy()
-    to_encode["exp"] = datetime.now(timezone.utc) + expires_delta
+async def get_current_user(session_id: Annotated[Optional[str], Depends(get_session_id)]) -> User:
+    credential_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=SIGNING_ALGORITHM)
-    return encoded_jwt
+    if session_id is None:
+        raise credential_exception
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
-    credential_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
-            headers={ "WWW-Authenticate": "Bearer" }
-        )
-
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[SIGNING_ALGORITHM])
-        username = payload.get("sub")
-        if username is None:
-            raise credential_exception
-        token_data = TokenData(username=username)
-    except JWTError:
+    session_result = await sessions_repository.get_session(session_id)
+    if is_err(session_result):
         raise credential_exception
     
-    user = await users_repository.get_user(token_data.username)
+    session = session_result.ok_value
+    user = await users_repository.get_user(session.username)
     if user is None:
         raise credential_exception
     
     return user
 
-@app.post("/auth/token")
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
+@app.post("/auth/login")
+async def login(form_data: Annotated[SignInForm, Depends()], response: Response):
     user_result = await authenticate_user(form_data.username, form_data.password)
     if is_err(user_result):
         raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, 
-                detail=user_result.err_value,
-                headers={"WWW-Authenticate": "Bearer"}
+                detail=user_result.err_value
             )
 
     user = user_result.ok_value
+    session_id = await sessions_repository.create_session(user.username)
+    response.set_cookie("session", 
+            value=session_id, 
+            max_age=259200,
+            expires=259200,
+            httponly=True,
+            secure=True,
+            samesite='strict'
+        )
 
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token({"sub": user.username}, access_token_expires)
-
-    return Token(access_token=access_token, token_type="bearer")
+@app.post("/auth/logout")
+async def logout(session_id: Annotated[Optional[str], Depends(get_session_id)], response: Response):
+    if session_id is None:
+        return
+    
+    await sessions_repository.terminate_session(session_id)
+    response.delete_cookie("session", httponly="True", secure="True")
 
 @app.post("/auth/sign-up")
-async def sign_up_user(form_data: Annotated[SignUpForm, Depends()]):
-    print(form_data)
+async def sign_up_user(form_data: Annotated[SignUpForm, Depends()], response: Response):
     user = User(
             username=form_data.username,
             email=form_data.email,
@@ -120,10 +114,15 @@ async def sign_up_user(form_data: Annotated[SignUpForm, Depends()]):
                 detail=result.err_value
             )
     
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token({"sub": user.username}, access_token_expires)
-
-    return Token(access_token=access_token, token_type="bearer")
+    session_id = await sessions_repository.create_session(user.username)
+    response.set_cookie("session", 
+            value=session_id, 
+            max_age=259200,
+            expires=259200,
+            httponly=True,
+            secure=True,
+            samesite='strict'
+        )
 
 @app.get("/product-lists")
 async def get_product_lists(current_user: Annotated[User, Depends(get_current_user)]) -> list[ProductList]:

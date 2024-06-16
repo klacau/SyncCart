@@ -7,9 +7,5 @@ class UserPublic(BaseModel):
 class User(UserPublic):
     hashed_password: str
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
+class Session(BaseModel):
     username: str
